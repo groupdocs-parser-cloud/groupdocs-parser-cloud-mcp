@@ -2,7 +2,8 @@
 import os
 import groupdocs_parser_cloud
 from groupdocs_parser_cloud import *
-from mcp.server.fastmcp import FastMCP, Image
+from mcp.server.fastmcp import FastMCP
+from PIL import Image
 from server_models import StorageFile,ImageFile, Barcode, obj_to_model_kwargs
 import shutil
 
@@ -66,13 +67,27 @@ def download_file(path: str) -> str:
     shutil.move(response, os.path.basename(path))
     return f"File downloaded: {os.path.basename(path)}"
 
-# @mcp.tool()
-# def get_image(image_path: str) -> Image:
-#     """Get an image from GroupDocs Cloud storage"""
-#     fileApi = groupdocs_parser_cloud.FileApi.from_config(configuration)
-#     request = groupdocs_parser_cloud.DownloadFileRequest(image_path)
-#     response = fileApi.download_file(request)
-#     return Image(path=response, format="jpeg")
+@mcp.tool()
+def get_image(image_path: str) -> Image.Image:
+    """Get an image from GroupDocs Cloud storage"""
+    fileApi = groupdocs_parser_cloud.FileApi.from_config(configuration)
+    request = groupdocs_parser_cloud.DownloadFileRequest(image_path)
+    # Download image as bytes
+    response = fileApi.download_file(request)
+    
+    if not os.path.exists(response):
+        raise FileNotFoundError(f"Downloaded file not found at: {response}")
+
+    # Open the image using Pillow
+    with open(response, "rb") as f:
+        img = Image.open(f).convert("RGBA")
+
+    # Optionally verify or normalize the format
+    ext = os.path.splitext(image_path)[1].lower().lstrip(".")
+    valid_exts = ["jpeg", "jpg", "png", "gif", "bmp", "tiff", "webp"]
+    img.format = ext.upper() if ext in valid_exts else "JPEG"
+
+    return img
 
 @mcp.tool()
 def upload_file(local_path: str, cloud_path: str) -> str:
