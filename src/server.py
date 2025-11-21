@@ -4,11 +4,15 @@ import groupdocs_parser_cloud
 from groupdocs_parser_cloud import *
 from mcp.server.fastmcp import FastMCP
 from PIL import Image
-from server_models import StorageFile,ImageFile, Barcode, obj_to_model_kwargs
+from server_models import StorageFile,ImageFile, Barcode
+from server_helpers import obj_to_model_kwargs, decode_base64_bytes
 import shutil
+import base64
+import tempfile
+import binascii
 
 # Initialize MCP server
-mcp  = FastMCP("mcp-groupdocs-cloud")
+mcp  = FastMCP("mcp-groupdocs-cloud", port=os.getenv("MCP_PORT"))
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 if not client_id or not client_secret:
@@ -90,12 +94,51 @@ def get_image(image_path: str) -> Image.Image:
     return img
 
 @mcp.tool()
-def upload_file(local_path: str, cloud_path: str) -> str:
-    """Upload a file from local workspace to GroupDocs Cloud storage."""
-    fileApi = groupdocs_parser_cloud.FileApi.from_config(configuration)
-    request = groupdocs_parser_cloud.UploadFileRequest(cloud_path, local_path)
-    fileApi.upload_file(request)
-    return f"File uploaded: {cloud_path}"
+def upload_file(file_stream: bytes, cloud_path: str) -> str:
+    """
+    Upload a file stream to GroupDocs Cloud storage.
+    - file_stream: file content as bytes or base64 string
+    - cloud_path: relative path in cloud storage (e.g., '/folder/sample.pdf')
+    """
+
+    # 1) Normalize to bytes
+    if isinstance(file_stream, str):
+        # String must be base64 text
+        file_stream = base64.b64decode(file_stream, validate=True)
+    elif isinstance(file_stream, (bytearray, memoryview)):
+        file_stream = bytes(file_stream)
+    elif not isinstance(file_stream, bytes):
+        raise TypeError(f"Unsupported type for file_stream: {type(file_stream)}")
+
+    # 2) If bytes actually contain base64 text, decode them
+    file_stream = decode_base64_bytes(file_stream)
+
+    # 3) Temp file + SDK call
+    _, ext = os.path.splitext(cloud_path)
+    tmp_path = None
+
+    try:
+        # Create a temporary file (delete=False for Windows compatibility)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_file:
+            tmp_path = tmp_file.name
+            tmp_file.write(file_stream)
+            tmp_file.flush()
+
+        # Call the SDK (which requires a file path)
+        request = groupdocs_parser_cloud.UploadFileRequest(cloud_path, tmp_path)
+
+        fileApi = groupdocs_parser_cloud.FileApi.from_config(configuration)
+        fileApi.upload_file(request)
+
+        return f"✅ File uploaded successfully to: {cloud_path}"
+
+    finally:
+        # Always delete temp file
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
 
 @mcp.tool()
 def file_exists(path: str) -> bool:
@@ -115,7 +158,8 @@ def delete_file(path: str) -> str:
 
 def main():
     """Entry point for the direct execution server."""
-    mcp.run()
+    #mcp.run()
+    mcp.run(transport="streamable-http")
 
 
 if __name__ == "__main__":
