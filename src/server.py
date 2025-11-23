@@ -7,9 +7,8 @@ from PIL import Image
 from server_models import StorageFile, ImageFile, Barcode, DownloadedFile
 from server_helpers import obj_to_model_kwargs, decode_base64_bytes
 import shutil
-import base64
 import tempfile
-import binascii
+import base64
 
 # Initialize MCP server
 mcp  = FastMCP("mcp-groupdocs-cloud", port=os.getenv("MCP_PORT"))
@@ -19,6 +18,7 @@ if not client_id or not client_secret:
     raise ValueError("CLIENT_ID and CLIENT_SECRET must be set in environment variables")
 configuration = groupdocs_parser_cloud.Configuration(client_id, client_secret)
 configuration.api_base_url = "https://api.groupdocs.cloud"
+configuration.timeout = 180  # seconds
 
 # ======================================================================
 # Parser-scoped tools
@@ -61,10 +61,12 @@ def parser_extract_images(path: str) -> list[ImageFile]:
     Extract images from a document in Cloud storage.
 
     Args:
-        path (str): Cloud path of the document to analyze.
+        path (str): Cloud path of the document to analyze
+                    (e.g., "/docs/sample.pdf").
 
     Returns:
-        list[ImageFile]: List of image metadata entries.
+        list[ImageFile]: List of extracted image entries.
+                         Each entry contains `path` to the image in cloud storage.
     """
     parseApi = groupdocs_parser_cloud.ParseApi.from_config(configuration)
     request = ImagesRequest(ImagesOptions(file_info=FileInfo(file_path=path)))
@@ -86,29 +88,30 @@ def parser_extract_barcodes(path: str) -> list[Barcode]:
     Returns:
         list[Barcode]: List of detected barcode entries.
     """
-    parseApi = groupdocs_parser_cloud.ParseApi.from_config(configuration)
-    request = BarcodesRequest(BarcodesOptions(file_info=FileInfo(file_path=path)))
-    response = parseApi.barcodes(request)
-    return [
-        Barcode(**obj_to_model_kwargs(it, Barcode))
-        for it in getattr(response, "barcodes", []) or []
-    ]
-
-# ======================================================================
-# Shared storage/file methods (same for all GD products)
-# ======================================================================
+    try:
+        parseApi = groupdocs_parser_cloud.ParseApi.from_config(configuration)
+        request = BarcodesRequest(BarcodesOptions(file_info=FileInfo(file_path=path)))
+        response = parseApi.barcodes(request)
+        items = getattr(response, "barcodes", None) or []
+        return [Barcode(**obj_to_model_kwargs(it, Barcode)) for it in items]
+    except Exception as e:
+        # make sure it raises a proper MCP error, not a misleading text string
+        raise RuntimeError(f"Failed to extract barcodes from {path}: {e}") from e
 
 @mcp.tool()
-def file_get_image(image_path: str) -> Image.Image:
+def parser_get_image(image_path: str) -> Image.Image:
     """
-    Download an image file from Cloud storage and return it as a PIL image.
+    Download an extracted image from Cloud storage and return it as an ImageContent.
+
+    This tool is meant to be used after `parser_extract_images`, which returns
+    cloud paths of extracted images.
 
     Args:
-        image_path (str): Full cloud storage path to the image file 
-                          (e.g., "/images/page-1.png").
+        image_path (str): Cloud path of the extracted image
+                          (e.g., "/temp/parsed/img_0.png").
 
     Returns:
-        Image.Image: The downloaded image in RGBA format.
+        PIL.Image.Image: The downloaded image. FastMCP serializes it as ImageContent.
     """
     fileApi = groupdocs_parser_cloud.FileApi.from_config(configuration)
     request = groupdocs_parser_cloud.DownloadFileRequest(image_path)
@@ -121,9 +124,11 @@ def file_get_image(image_path: str) -> Image.Image:
         with open(local_path, "rb") as f:
             img = Image.open(f).convert("RGBA")
 
+        # normalize format hint
         ext = os.path.splitext(image_path)[1].lower().lstrip(".")
         valid_exts = ["jpeg", "jpg", "png", "gif", "bmp", "tiff", "webp"]
         img.format = ext.upper() if ext in valid_exts else "PNG"
+
         return img
     finally:
         try:
@@ -131,6 +136,9 @@ def file_get_image(image_path: str) -> Image.Image:
         except Exception:
             pass
 
+# ======================================================================
+# Shared storage/file methods (same for all GD products)
+# ======================================================================
 
 @mcp.tool()
 def file_upload(file_stream: bytes, cloud_path: str) -> str:

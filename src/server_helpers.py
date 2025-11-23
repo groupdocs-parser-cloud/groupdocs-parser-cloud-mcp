@@ -1,4 +1,6 @@
 from datetime import datetime, date
+import binascii
+import base64
 
 # Generic converter: turn a dict/object into kwargs for any pydantic model class
 def obj_to_model_kwargs(item, model_cls):
