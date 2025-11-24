@@ -1,68 +1,157 @@
-# mcp-groupdocs-cloud
+# GroupDocs.Parser Cloud MCP Server
 
-A lightweight MCP (Model Context Protocol) server that wraps GroupDocs Cloud functionality.
+[![Python Version](https://img.shields.io/badge/Python-3.10%2B-blue.svg)]()
+[![License](https://img.shields.io/badge/License-MIT-green.svg)]()
+[![GroupDocs.Cloud](https://img.shields.io/badge/GroupDocs-Cloud_API-orange.svg)]()
+[![MCP Compatible](https://img.shields.io/badge/MCP-Model_Context_Protocol-purple.svg)]()
 
-This repository contains a small Python-based MCP server used to expose GroupDocs Cloud capabilities via a simple local server for development, testing, and integration. The code is located in the `src/` folder (`server.py`, `server_models.py`) and a minimal test runner is provided in `src/test.py`.
+A lightweight **MCP (Model Context Protocol)** server that wraps **GroupDocs.Parser Cloud API** to provide document-parsing capabilities to AI agents, assistants, and development environments.
 
-## Requirements
-- Obtain your GroupDocs Cloud API credentials (ClientId and ClientSecret) at https://dashboard.groupdocs.cloud/#/applications
-- Python 3.10+ (recommend using a virtual environment)
-- Install Python dependencies:
+It enables LLMs to extract text, images, and barcodes from documents stored in GroupDocs Cloud storage, and provides shared cloud storage utilities (upload, download, list, exists, delete).
+
+---
+
+# 🔧 Features
+
+- Lightweight GroupDocs.Parser Cloud MCP server
+- Document parsing via GroupDocs.Parser Cloud:
+  - Extract **plain text**
+  - Extract **images** 
+  - Extract **barcodes**  
+- Supports 50+ document formats (PDF, Word, Excel, PowerPoint, emails, archives, images, and more)
+- Cross-platform: Windows, macOS, Linux
+
+# 🚀 Quick Start
+
+This section explains how to configure and run the **GroupDocs.Parser Cloud MCP server** 
+
+## 1. Clone the repository
 
 ```bash
-pip install -r requirements.txt
+git clone git@github.com:groupdocs-parser-cloud/groupdocs-parser-cloud-mcp.git
+cd groupdocs-parser-cloud-mcp
 ```
 
-## Quick start (local)
+## 2. Create and activate a virtual environment
 
-1. Clone the repo and change into it.
-2. (Optional) Create and activate a virtualenv:
-
+### Linux / macOS:
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Configure environment variables (if your server uses any external API keys). This project may integrate with GroupDocs Cloud APIs — if so, set your credentials in environment variables or a secrets store. Reasonable example variables (adjust to your code):
-
-```bash
-export GROUPDOCS_CLIENT_ID="your-client-id"
-export GROUPDOCS_CLIENT_SECRET="your-client-secret"
-export MCP_PORT=8080
+### Windows PowerShell:
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
-4. Run the server locally. The repository contains `src/server.py` which can be started directly:
+## 3. Configure environment variables
 
-```bash
-python ./src/server.py
+Create a `.env` file:
+
+```
+CLIENT_ID=your-client-id
+CLIENT_SECRET=your-client-secret
+MCP_PORT=8000
 ```
 
-Note: If your `server.py` uses a framework like Flask or FastAPI and requires a specific runner (e.g., `uvicorn`), start it as appropriate for that framework. Check `src/server.py` for the exact entrypoint.
+Get credentials at:  
+https://dashboard.groupdocs.cloud/#/applications
 
-## How to use
+## 4. Run the server
 
-- Inspect `src/server.py` and `src/server_models.py` to see the available endpoints or handlers and the expected request/response models.
-- The server is designed to act as an MCP worker — connect an MCP-aware client to it and exchange the protocol messages defined by your integration.
-
-Because implementations differ, this README intentionally avoids hardcoding endpoint examples. See the source files for the canonical contract.
-
-## Docker
-
-There is a `Dockerfile` in the repo. You can build and run the container locally if you prefer containerized development. Example:
-
-```bash
-docker build -t mcp-groupdocs-cloud .
-docker run -e GROUPDOCS_CLIENT_ID=... -e GROUPDOCS_CLIENT_SECRET=... -p 8080:8080 mcp-groupdocs-cloud
+### PowerShell
+```powershell
+.\run.ps1
 ```
 
-Adjust environment variables or ports to match your server’s configuration.
+### Bash / macOS / Linux
+```bash
+./run.sh
+```
 
-## License
+Server starts at:
 
-See the `LICENSE` file at the repository root.
+```
+http://localhost:8000/mcp
+```
 
-## Contact
+---
 
-If you need help understanding the code, open an issue or contact the project maintainers.
+## 5. Test with @modelcontextprotocol/inspector
 
+1. Run the inspector:
+   ```bash
+   npx @modelcontextprotocol/inspector
+   ```
+2. In the browser:
+   - Select **“streamable HTTP”**
+   - Enter:
+     ```
+     http://localhost:8000/mcp
+     ```
+   - Click **Connect**
+
+
+---
+
+# 🧩 How to use the MCP server in your environments, agents, and assistants
+
+This section describes real-world integration examples.
+
+---
+
+## 📘 Using the MCP server in VSCode
+
+1. Create `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "groupdocs-parser-mcp-local": {
+      "type": "http",
+      "url": "http://127.0.0.1:8000/mcp"
+    }
+  }
+}
+```
+
+2. Restart VSCode if required.  
+Now the MCP server is available inside VSCode’s MCP-enabled environments.
+
+---
+
+## 🤖 Using the MCP server with KiloCode
+
+1. Open the project in VSCode  
+2. Go to **KiloCode Settings → MCP Servers**  
+3. Open the **Installed** tab  
+4. Edit “Project MCP”  
+5. Add the config:
+
+```json
+{
+  "mcpServers": {
+    "groupdocs-parser-mcp-local": {
+      "type": "streamable-http",
+      "url": "http://127.0.0.1:8000/mcp",
+      "disabled": false,
+      "alwaysAllow": []
+    }
+  }
+}
+```
+
+6. Add a test file such as `info.pdf`  
+7. Example prompt:
+
+> Extract text from `info.pdf` using groupdocs parser MCP and briefly summarize the document.
+
+---
+
+# 📄 License
+
+This project is licensed under **MIT License**.
