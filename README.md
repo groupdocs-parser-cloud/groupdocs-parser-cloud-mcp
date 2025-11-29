@@ -34,23 +34,31 @@ cd groupdocs-parser-cloud-mcp
 
 ## 2. Create and activate a virtual environment
 
-### Linux / macOS:
+### Bash / macOS / Linux
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Windows PowerShell:
+### Windows (PowerShell):
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
+### Windows (CMD):
+```cmd
+python -m venv .venv
+.\.venv\Scripts\activate.bat
+pip install -r requirements.txt
+```
+
 ## 3. Configure environment variables
 
-Create a `.env` file:
+Create a `.env` file with your settings.  
+You can either create it manually or copy the `.env.example` file.
 
 ```
 CLIENT_ID=your-client-id
@@ -63,14 +71,19 @@ https://dashboard.groupdocs.cloud/#/applications
 
 ## 4. Run the server
 
-### PowerShell
+### Bash / macOS / Linux
+```bash
+./run.sh
+```
+
+### Windows (PowerShell):
 ```powershell
 .\run.ps1
 ```
 
-### Bash / macOS / Linux
-```bash
-./run.sh
+### Windows (CMD):
+```cmd
+run.bat
 ```
 
 Server starts at:
