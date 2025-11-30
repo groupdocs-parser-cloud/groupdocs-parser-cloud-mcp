@@ -32,30 +32,7 @@ git clone git@github.com:groupdocs-parser-cloud/groupdocs-parser-cloud-mcp.git
 cd groupdocs-parser-cloud-mcp
 ```
 
-## 2. Create and activate a virtual environment
-
-### Bash / macOS / Linux
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Windows (PowerShell):
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-### Windows (CMD):
-```cmd
-python -m venv .venv
-.\.venv\Scripts\activate.bat
-pip install -r requirements.txt
-```
-
-## 3. Configure environment variables
+## 2. Configure environment variables
 
 Create a `.env` file with your settings.  
 You can either create it manually or copy the `.env.example` file.
@@ -69,7 +46,7 @@ MCP_PORT=8000
 Get credentials at:  
 https://dashboard.groupdocs.cloud/#/applications
 
-## 4. Run the server
+## 3. Run the server
 
 ### Bash / macOS / Linux
 ```bash
@@ -94,7 +71,13 @@ http://localhost:8000/mcp
 
 ---
 
-## 5. Test with @modelcontextprotocol/inspector
+# 🧩 How to use the MCP server in your environments, agents, and assistants
+
+This section describes integration examples.
+
+---
+
+## Test with @modelcontextprotocol/inspector
 
 1. Run the inspector:
    ```bash
@@ -102,18 +85,12 @@ http://localhost:8000/mcp
    ```
 2. In the browser:
    - Select **“streamable HTTP”**
-   - Enter:
+   - Enter your MCP URL:
      ```
-     http://localhost:8000/mcp
+     http://127.0.0.1:8000/mcp
      ```
    - Click **Connect**
 
-
----
-
-# 🧩 How to use the MCP server in your environments, agents, and assistants
-
-This section describes real-world integration examples.
 
 ---
 
@@ -164,6 +141,56 @@ Now the MCP server is available inside VSCode’s MCP-enabled environments.
 > Extract text from `info.pdf` using groupdocs parser MCP and briefly summarize the document.
 
 ---
+
+# Troubleshooting and Advanced Options
+
+## Reinitialize the Virtual Environment
+
+If you update the codebase and the MCP server stops working due to missing dependencies (for example, after adding new packages to `requirements.txt`), you may need to **fully reinitialize** the local virtual environment.
+
+To do this, use the `init_mcp` script for your platform:
+
+### Linux / macOS / Bash
+```bash
+./init_mcp.sh
+```
+
+### Windows PowerShell
+```powershell
+.\init_mcp.ps1
+```
+
+### Windows CMD
+```cmd
+init_mcp.bat
+```
+
+### What this command does
+The `init_mcp` script performs a full reset:
+
+1. Removes the existing `.venv` directory  
+2. Creates a fresh virtual environment  
+3. Installs all dependencies from `requirements.txt`  
+4. Prepares the environment so `run_mcp.*` can start the server normally
+
+After reinitialization, simply start the server again:
+
+### Bash / macOS / Linux
+```bash
+./run_mcp.sh
+```
+
+### PowerShell
+```powershell
+.\run_mcp.ps1
+```
+
+### CMD
+```cmd
+run_mcp.bat
+```
+
+This ensures your environment is always in sync with the current project requirements.
 
 # 📄 License
 
