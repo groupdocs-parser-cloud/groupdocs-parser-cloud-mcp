@@ -1,3 +1,4 @@
 mcp
 groupdocs_parser_cloud
 pydantic
+Pillow
