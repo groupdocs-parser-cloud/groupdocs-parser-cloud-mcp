@@ -188,6 +188,37 @@ def file_upload(file_stream: bytes, cloud_path: str) -> str:
 
 
 @mcp.tool()
+def file_upload_local(local_path: str, cloud_path: str) -> str:
+    """
+    Upload a local file (by path) to GroupDocs Cloud storage.
+
+    This is useful for environments where the LLM cannot send raw/base64
+    file bytes, but can reference a file that the MCP server can read
+    from the local filesystem.
+
+    Args:
+        local_path (str): Absolute or relative path to a file that is
+                          readable by the MCP server process.
+        cloud_path (str): Destination path in Cloud storage
+                          (e.g., "/uploads/sample.pdf").
+
+    Returns:
+        str: Success message with target path.
+    """
+
+    if not os.path.exists(local_path):
+        raise FileNotFoundError(f"Local file not found: {local_path}")
+    if not os.path.isfile(local_path):
+        raise IsADirectoryError(f"Expected a file but got directory: {local_path}")
+
+    fileApi = groupdocs_parser_cloud.FileApi.from_config(configuration)
+    request = groupdocs_parser_cloud.UploadFileRequest(cloud_path, local_path)
+    fileApi.upload_file(request)
+
+    return f"✅ File uploaded successfully to: {cloud_path}"
+
+
+@mcp.tool()
 def file_download(path: str) -> DownloadedFile:
     """
     Download a file from Cloud storage and return it as base64 content.

@@ -138,7 +138,32 @@ Now the MCP server is available inside VSCode’s MCP-enabled environments.
 6. Add a test file such as `info.pdf`  
 7. Example prompt:
 
-> Extract text from `info.pdf` using groupdocs parser MCP and briefly summarize the document.
+> Extract text from `info.pdf` using Groupdocs.Parser MCP and briefly summarize the document.
+
+---
+
+## 🧠 Using the MCP server with Cursor
+
+To use this MCP server with **Cursor**, configure the `mcp.json` file in your Cursor settings.
+
+1. Open **Cursor Settings** at the right top corner of the window  
+2. Navigate to **Tools & MCP** section  
+3. Click **Add Custom MCP**  
+4. Locate or create the `mcp.json` configuration section and add the following configuration:
+
+```json
+{
+  "mcpServers": {
+    "groupdocs-parser-mcp-local": {
+      "url": "http://127.0.0.1:8000/mcp"
+    }
+  }
+}
+```
+
+5. In a Cursor chat, feel free to reference documents stored in GroupDocs.Cloud or ask to process local documents so they can be uploaded to GroupDocs.Cloud. For example, use prompts such as:
+
+> Extract text from [your-folder]\a-book.epub with GroupDocs.Parser MCP and summarize the information from the e-book.
 
 ---
 
