@@ -116,26 +116,23 @@ Now the MCP server is available inside VSCode’s MCP-enabled environments.
 
 ## 🤖 Using the MCP server with KiloCode
 
-1. Open the project in VSCode  
-2. Go to **KiloCode Settings → MCP Servers**  
-3. Open the **Installed** tab  
-4. Edit “Project MCP”  
-5. Add the config:
+1. Open **KiloCode Settings → MCP Servers**  
+2. Open the **Installed** tab  
+3. Edit “Project MCP”  
+4. Add the config:
 
 ```json
 {
   "mcpServers": {
     "groupdocs-parser-mcp-local": {
       "type": "streamable-http",
-      "url": "http://127.0.0.1:8000/mcp",
-      "disabled": false,
-      "alwaysAllow": []
+      "url": "http://127.0.0.1:8000/mcp"
     }
   }
 }
 ```
 
-6. Add a test file such as `info.pdf`  
+5. Add a test file such as `info.pdf`  
 7. Example prompt:
 
 > Extract text from `info.pdf` using Groupdocs.Parser MCP and briefly summarize the document.
