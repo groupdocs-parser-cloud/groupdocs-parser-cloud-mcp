@@ -197,7 +197,7 @@ def file_upload_local(local_path: str, cloud_path: str) -> str:
     from the local filesystem.
 
     Args:
-        local_path (str): Absolute or relative path to a file that is
+        local_path (str): Absolute path to a file that is
                           readable by the MCP server process.
         cloud_path (str): Destination path in Cloud storage
                           (e.g., "/uploads/sample.pdf").
@@ -253,6 +253,55 @@ def file_download(path: str) -> DownloadedFile:
             os.remove(local_path)
         except Exception:
             pass
+
+
+@mcp.tool()
+def file_download_local(path: str, local_path: str) -> str:
+    """
+    Download a file from Cloud storage and save it directly to a local path.
+
+    This method avoids base64 encoding and is intended for cases where the MCP
+    server is executed locally (for example on 127.0.0.1 or localhost) and has
+    direct access to the desired filesystem path.
+
+    Args:
+        path (str): Cloud file path (e.g., "/docs/sample.pdf").
+        local_path (str): Absolute path on the MCP server host
+                          where the file should be stored.
+
+    Returns:
+        str: Success message with target local path.
+    """
+    fileApi = groupdocs_parser_cloud.FileApi.from_config(configuration)
+    request = groupdocs_parser_cloud.DownloadFileRequest(path)
+    tmp_path = fileApi.download_file(request)
+
+    if not os.path.exists(tmp_path):
+        raise FileNotFoundError(f"Downloaded file not found at: {tmp_path}")
+
+    target_dir = os.path.dirname(local_path)
+    if target_dir:
+        os.makedirs(target_dir, exist_ok=True)
+
+    # If a file already exists at the target location, replace it.
+    if os.path.isfile(local_path):
+        try:
+            os.remove(local_path)
+        except Exception as e:
+            raise RuntimeError(f"Failed to remove existing file at {local_path}: {e}") from e
+
+    try:
+        shutil.move(tmp_path, local_path)
+    except Exception as e:
+        # Best-effort cleanup of the temporary file
+        try:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except Exception:
+            pass
+        raise RuntimeError(f"Failed to move downloaded file to {local_path}: {e}") from e
+
+    return f"✅ File downloaded successfully to local path: {local_path}"
 
 
 @mcp.tool()
